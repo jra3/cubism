@@ -1071,6 +1071,12 @@ cubism_contextPrototype.rule = function() {
         .attr("class", "line")
         .call(cubism_ruleStyle);
 
+    var message = selection.append("span")
+        .attr("class", "message")
+        .style("position", "absolute");
+
+    var markers = {};
+
     selection.each(function(d, i) {
       var that = this,
           id = ++cubism_id,
@@ -1081,16 +1087,23 @@ cubism_contextPrototype.rule = function() {
       function change(start, stop) {
         var values = [];
 
+        markers = {};
         for (var i = 0, n = context.size(); i < n; ++i) {
-          if (metric_.valueAt(i)) {
+          var event = metric_.valueAt(i);
+          if (event) {
             values.push({i: i});
+            markers[i] = event;
           }
         }
 
         var lines = selection.selectAll(".metric").data(values);
         lines.exit().remove();
-        lines.enter().append("div").attr("class", "metric line").call(cubism_ruleStyle);
+        lines.enter().append("div")
+            .attr("class", "metric line")
+            .text(function(d) {return d.event;})
+            .call(cubism_ruleStyle);
         lines.style("left", cubism_ruleLeft);
+
       }
 
       context.on("change.rule-" + id, change);
@@ -1098,6 +1111,7 @@ cubism_contextPrototype.rule = function() {
     });
 
     context.on("focus.rule-" + id, function(i) {
+      message.text(markers[i] || "");
       line.datum().i = i;
       line.style("display", i == null ? "none" : null)
           .style("left", i == null ? null : cubism_ruleLeft);
